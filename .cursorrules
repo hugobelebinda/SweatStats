@@ -1,0 +1,7 @@
+"Always use Next.js 15 App Router conventions."
+
+"Use Supabase-js for client-side and Server Actions for database mutations."
+
+"Stick to Tailwind CSS for styling and shadcn/ui for components."
+
+"Ensure all database queries have proper Row Level Security (RLS) policies."
