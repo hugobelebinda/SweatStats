@@ -8,6 +8,8 @@ export interface DbUser {
   access_token: string;
   refresh_token: string;
   expires_at: number;
+  body_weight_kg?: number | null;
+  goal_weight_kg?: number | null;
   created_at: string;
   updated_at: string;
 }

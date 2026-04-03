@@ -71,7 +71,7 @@ export async function ensureValidAccessToken(
 
 export async function fetchStravaActivities(accessToken: string): Promise<StravaActivity[]> {
   const res = await fetch(
-    "https://www.strava.com/api/v3/athlete/activities?per_page=30",
+    "https://www.strava.com/api/v3/athlete/activities?per_page=100",
     { headers: { Authorization: `Bearer ${accessToken}` } },
   );
   if (!res.ok) {

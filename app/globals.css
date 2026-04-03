@@ -6,4 +6,8 @@
   body {
     @apply m-0 min-h-screen bg-page-bg font-sans text-marine antialiased;
   }
+
+  .dark body {
+    @apply bg-slate-950 text-slate-100;
+  }
 }

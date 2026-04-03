@@ -10,64 +10,78 @@ import {
   Tooltip,
   type ChartOptions,
 } from "chart.js";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
+import { usePreferences } from "@/contexts/preferences-context";
+import { buildLastSevenDaysVolume } from "@/lib/chartVolume";
+import { metersToDisplay } from "@/lib/units";
 import type { StravaActivity } from "@/types/strava";
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const chartOptions: ChartOptions<"bar"> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      backgroundColor: "#333",
-      titleColor: "#fff",
-      bodyColor: "#fff",
-      borderColor: "#555",
-      borderWidth: 1,
-    },
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      grid: { color: "#333" },
-      ticks: { color: "#888" },
-    },
-    x: {
-      grid: { display: false },
-      ticks: { color: "#888" },
-    },
-  },
-};
-
 export function WeeklyChart({ activities }: { activities: StravaActivity[] }) {
+  const { unit, theme } = usePreferences();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart<"bar"> | null>(null);
 
+  const { labels, values, unitLabel } = useMemo(() => {
+    const { labels: lbs, distancesMeters } = buildLastSevenDaysVolume(activities);
+    const values = distancesMeters.map((m) =>
+      Number(metersToDisplay(m, unit).toFixed(2)),
+    );
+    return {
+      labels: lbs,
+      values,
+      unitLabel: unit === "mi" ? "mi" : "km",
+    };
+  }, [activities, unit]);
+
+  const isDark = theme === "dark";
+
   useEffect(() => {
-    const last7 = activities.slice(0, 7).reverse();
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     chartRef.current?.destroy();
     chartRef.current = null;
 
-    if (last7.length === 0) {
-      return;
-    }
+    const gridColor = isDark ? "#334155" : "#333";
+    const tickColor = isDark ? "#94a3b8" : "#888";
+
+    const chartOptions: ChartOptions<"bar"> = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: isDark ? "#1e293b" : "#333",
+          titleColor: "#fff",
+          bodyColor: "#fff",
+          borderColor: isDark ? "#475569" : "#555",
+          borderWidth: 1,
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: gridColor },
+          ticks: { color: tickColor },
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: tickColor },
+        },
+      },
+    };
 
     chartRef.current = new Chart(canvas, {
       type: "bar",
       data: {
-        labels: last7.map((a) =>
-          new Date(a.start_date).toLocaleDateString("en-US", { weekday: "short" }),
-        ),
+        labels,
         datasets: [
           {
-            label: "Distance (km)",
-            data: last7.map((a) => Number((a.distance / 1000).toFixed(1))),
+            label: `Distance (${unitLabel})`,
+            data: values,
             backgroundColor: "#e94560",
             borderRadius: 4,
             borderSkipped: false,
@@ -81,11 +95,10 @@ export function WeeklyChart({ activities }: { activities: StravaActivity[] }) {
       chartRef.current?.destroy();
       chartRef.current = null;
     };
-  }, [activities]);
+  }, [activities, labels, values, unitLabel, isDark]);
 
   return (
-    <div className="relative h-[220px] w-full text-[#333]">
-      {/* Fixed height: maintainAspectRatio:false fills the box; flex-1/h-full caused unbounded growth in the dashboard column */}
+    <div className="relative h-[220px] w-full text-[#333] dark:text-slate-200">
       <canvas ref={canvasRef} className="block max-h-full" />
     </div>
   );

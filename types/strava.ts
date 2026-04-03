@@ -15,6 +15,11 @@ export interface StravaActivity {
   moving_time: number;
   start_date: string;
   map?: { summary_polyline?: string };
+  /** Present on some API/DB shapes */
+  map_polyline?: string | null;
+  total_elevation_gain?: number;
+  average_heartrate?: number;
+  max_heartrate?: number;
 }
 
 export interface StravaTokenResponse {

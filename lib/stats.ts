@@ -1,16 +1,22 @@
 import type { StravaActivity } from "@/types/strava";
 
 export interface WeeklyStats {
-  weeklyDistance: string;
   weeklyTime: string;
-  avgPace: string;
   lastWorkoutType: string;
   lastWorkoutDate: string;
+  /** Legacy km string (fixed decimals) */
+  weeklyDistance: string;
+  avgPace: string;
   lastWorkoutDistance: string;
+  /** Raw totals for km/mi switching */
+  totalWeeklyMeters: number;
+  totalWeeklyMovingSeconds: number;
+  lastWorkoutMeters: number;
+  lastWorkoutMovingSeconds: number;
 }
 
 /**
- * Ported from Frontend/src/App.svelte `calculateWeeklyStats` — logic must stay identical.
+ * Ported from Frontend/src/App.svelte `calculateWeeklyStats` — logic must stay identical for km strings.
  */
 export function calculateWeeklyStats(data: StravaActivity[]): WeeklyStats {
   const defaults: WeeklyStats = {
@@ -20,6 +26,10 @@ export function calculateWeeklyStats(data: StravaActivity[]): WeeklyStats {
     lastWorkoutType: "Run",
     lastWorkoutDate: "Yesterday",
     lastWorkoutDistance: "0.0",
+    totalWeeklyMeters: 0,
+    totalWeeklyMovingSeconds: 0,
+    lastWorkoutMeters: 0,
+    lastWorkoutMovingSeconds: 0,
   };
 
   if (!data.length) return defaults;
@@ -47,12 +57,16 @@ export function calculateWeeklyStats(data: StravaActivity[]): WeeklyStats {
   let lastWorkoutType = defaults.lastWorkoutType;
   let lastWorkoutDate = defaults.lastWorkoutDate;
   let lastWorkoutDistance = defaults.lastWorkoutDistance;
+  let lastWorkoutMeters = 0;
+  let lastWorkoutMovingSeconds = 0;
   if (data.length > 0) {
     lastWorkoutType = data[0].type;
     lastWorkoutDate = new Date(data[0].start_date).toLocaleDateString("en-US", {
       weekday: "long",
     });
     lastWorkoutDistance = (data[0].distance / 1000).toFixed(1);
+    lastWorkoutMeters = data[0].distance;
+    lastWorkoutMovingSeconds = data[0].moving_time;
   }
 
   return {
@@ -62,5 +76,9 @@ export function calculateWeeklyStats(data: StravaActivity[]): WeeklyStats {
     lastWorkoutType,
     lastWorkoutDate,
     lastWorkoutDistance,
+    totalWeeklyMeters: totalDistMeters,
+    totalWeeklyMovingSeconds: totalSeconds,
+    lastWorkoutMeters,
+    lastWorkoutMovingSeconds,
   };
 }
